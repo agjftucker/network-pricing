@@ -1,6 +1,7 @@
 import json
-from itertools import combinations
+from itertools import repeat, combinations, combinations_with_replacement
 import numpy as np
+from scipy.sparse.linalg import LinearOperator, bicgstab
 
 def load_coefficients():
     with open('pseudospectral.json') as f:
@@ -21,16 +22,17 @@ def differentiate_boundary(B, v):
     Dx_v = {}
     for i in B:
         for s, j in enumerate(B):
-            Dx_v[i, j] = (np.einsum(COEFF['first_deriv_edge'], (j,), v[B[:s] + B[s+1:]][i], B[:s] + B[s+1:])
+            Dx_v[i, j] = ((0.0 if i == j else np.einsum(COEFF['first_deriv_edge'], (j,), v[B[:s] + B[s+1:]][i], B[:s] + B[s+1:]))
                           + np.einsum(COEFF['first_deriv_interior'], (j, m), v[B][i], B[:s] + (m,) + B[s+1:]))
     Dxx_v = {}
     for i in B:
         for s, j in enumerate(B):
-            Dxx_v[i, j, j] = (np.einsum(COEFF['second_deriv_edge'], (j,), v[B[:s] + B[s+1:]][i], B[:s] + B[s+1:])
-                              + np.einsum(COEFF['second_deriv_interior'], (j, n), v[B][i], B[:s] + (n,) + B[s+1:]))
+            Dxx_v[i, j, j] = ((0.0 if i == j else np.einsum(COEFF['second_deriv_edge'], (j,), v[B[:s] + B[s+1:]][i], B[:s] + B[s+1:]))
+                              + np.einsum(COEFF['second_deriv_interior'], (j, m), v[B][i], B[:s] + (m,) + B[s+1:]))
         for (s, j), (t, k) in combinations(enumerate(B), 2):
-            Dxx_v[i, j, k] = (np.einsum(COEFF['cross_deriv_corner'], (j, k), v[B[:s] + B[s+1:t] + B[t+1:]][i], B[:s] + B[s+1:t] + B[t+1:])
-                              + np.einsum(COEFF['cross_deriv_edge'], (j, k, m), v[B[:t] + B[t+1:]][i], B[:s] + (m,) + B[s+1:t] + B[t+1:])
-                              + np.einsum(COEFF['cross_deriv_edge'], (k, j, n), v[B[:s] + B[s+1:]][i], B[:s] + B[s+1:t] + (n,) + B[t+1:])
+            Dxx_v[i, j, k] = ((0.0 if i in (j, k) else np.einsum(COEFF['cross_deriv_corner'], (j, k), v[B[:s] + B[s+1:t] + B[t+1:]][i], B[:s] + B[s+1:t] + B[t+1:]))
+                              + (0.0 if i == k else np.einsum(COEFF['cross_deriv_edge'], (j, k, m), v[B[:t] + B[t+1:]][i], B[:s] + (m,) + B[s+1:t] + B[t+1:]))
+                              + (0.0 if i == j else np.einsum(COEFF['cross_deriv_edge'], (k, j, n), v[B[:s] + B[s+1:]][i], B[:s] + B[s+1:t] + (n,) + B[t+1:]))
                               + np.einsum(COEFF['cross_deriv_interior'], (j, k, m, n), v[B][i], B[:s] + (m,) + B[s+1:t] + (n,) + B[t+1:]))
     return Dx_v, Dxx_v
+
