@@ -69,7 +69,7 @@ def parse_json(flex_input):
     return bankingsystem.BankingSystem(banks)
     
 
-def parse_csv(in_bs, in_exp, delimiter=','):
+def parse_csv(in_bs, in_exp, in_covar='', delimiter=','):
     """Parse CSV files that hold information on balance sheets and exposures of 
     the banking system.
     
@@ -159,6 +159,21 @@ def parse_csv(in_bs, in_exp, delimiter=','):
         params[name] = {}
         for field in header:
             params[name][field] = line[idx_dict[field]]
+
+    # loading covariance data
+    if in_covar:
+        if isinstance(in_covar, string_types):
+            with open(in_covar) as csvfile_covar:
+                lines = list(csv.reader(csvfile_covar, delimiter=delimiter))
+        else:
+            lines = list(csv.reader(in_covar, delimiter=delimiter))
+
+    # parsing covariances
+    # adjacency list mode
+        for bank_i, bank_j, covar in lines:
+            if 'covar' not in params[bank_i]:
+                params[bank_i]['covar'] = {}
+            params[bank_i]['covar'][bank_j] = float(covar)
 
     # loading exposures data
     if isinstance(in_exp, string_types):

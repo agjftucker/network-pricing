@@ -2,9 +2,10 @@ import json
 from itertools import repeat, combinations, combinations_with_replacement
 import numpy as np
 from scipy.sparse.linalg import LinearOperator, bicgstab
+from .gbm import BankGBM, BankingSystemGBM
 
 def load_coefficients():
-    with open('pseudospectral.json') as f:
+    with open('neva/pseudospectral.json') as f:
         coeff = json.load(f)
     return {k : np.array(v) for k, v in coeff}
 
@@ -36,3 +37,23 @@ def differentiate_boundary(B, v):
                               + np.einsum(COEFF['cross_deriv_interior'], (j, k, m, n), v[B][i], B[:s] + (m,) + B[s+1:t] + (n,) + B[t+1:]))
     return Dx_v, Dxx_v
 
+class BankingSystemCorrelatedGBM(BankingSystemGBM):
+    """Banking system whose banks have external assets that follow a correlated
+    Geometric Brownian Motion."""
+    @classmethod
+    def with_covar_asset(cls, bnksys, covar_asset):
+        """Create a banking system whose banks have external assets that follow
+        a Geometric Brownian Motion by providing the covariance matrix of
+        external assets.
+        
+        Parameters:
+            bnksys (`BankingSystemAdjust`): banking system object
+            covar_asset (dictionary of float): covariance matrix of external assets
+        """
+        banks_gbm = [BankGBM(bnksys.banksbyname[bank_i], sigma_asset=np.sqrt(covar_asset[bank_i, bank_i]))
+                     for bank_i in bnksys.banksbyname]
+        new_sys = cls._from_bankingsystem(banks_gbm, bnksys)
+        # Copied from BankingSystemGBM. But I don't understand why this is not the usual instantiation... AT
+        bidx = {bnk.name: idx for idx, bnk in new_sys.banksbyid.items()}
+        new_sys.covar = {(bidx[bank_i], bidx[bank_j]) : S_ij for (bank_i, bank_j), S_ij in covar_asset.items()}
+        return new_sys

@@ -2,6 +2,7 @@ from .bank import Bank
 from .bankingsystem import BankingSystem
 from .adjust import BankAdjust, BankingSystemAdjust
 from .gbm import BankGBM, BankGBMse, BankingSystemGBM, BankingSystemGBMse
+from .lattice import BankingSystemCorrelatedGBM
 
 from .parse import parse_json
 from .parse import parse_csv
