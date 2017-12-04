@@ -89,6 +89,9 @@ bsys, params = neva.parse_csv('data/balance_sheets.csv', 'data/exposures_table.c
 # Geometric Brownian Motion on external assets, with covariance matrix supplied.
 covar = {(b1, b2): params[b1]['covar'][b2] for b1 in params for b2 in params[b1]['covar']}
 bsys = neva.BankingSystemCorrelatedGBM.with_covar_asset(bsys, covar)
+
+equity_delta = [0.0 for _ in bsys]
+neva.shock_and_solve(bsys, equity_delta, method='', solve_assets=False)
 ```
 
 ## Compatibility
