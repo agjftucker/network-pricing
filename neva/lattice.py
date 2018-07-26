@@ -143,7 +143,7 @@ def solve_pdes(pool, B, eta, v, boundary_derivs, coeff, S, z, L):
     grid_shape = tuple(it.repeat(len(x) - 1, n_banks))
     Dx_G = np.empty((n_banks, n_banks) + grid_shape)
     Dxx_G = {}
-    # Notes on this section at https://github.com/agjftucker/neva/algebraic-mapping.ipynb.
+    # Notes on this at https://github.com/agjftucker/neva/blob/master/algebraic-mapping.ipynb.
     for s, j in enumerate(B):
         not_j = B[:s] + B[s+1:]
         fail_j = z[j] - np.sum(v[not_j][i] * L[i, j] for i in not_j)
@@ -208,7 +208,7 @@ def valuation(grid_points, eta, sol, z, L, a):
         w = [weights(xi, grid_points, 1) for xi in x]
         h = {k: c[:, 0] for k, c in zip(B, w)}
         hp = {k: c[:, 1] for k, c in zip(B, w)}
-        # Again refer to https://github.com/agjftucker/neva/algebraic-mapping.ipynb.
+        # Again refer to https://github.com/agjftucker/neva/blob/master/algebraic-mapping.ipynb.
         G = (1. + x) * eta / (1. - x) - y
         Dx_G = np.diag(2. * eta / (1. - x) ** 2)
         for s, j in enumerate(B):
