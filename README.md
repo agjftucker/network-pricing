@@ -1,3 +1,19 @@
+(AT) My contribution is contained mainly in the file [lattice.py](neva/lattice.py). It may be invoked thus:
+
+```python
+import neva
+
+# parsing data
+bsys, params = neva.parse_csv('data/balance_sheets.csv', 'data/exposures_table.csv', 'data/covar_list.csv')
+
+# Geometric Brownian Motion on external assets, with covariance matrix supplied.
+covar = {(b1, b2): params[b1]['covar'][b2] for b1 in params for b2 in params[b1]['covar']}
+bsys = neva.BankingSystemCorrelatedGBM.with_covar_asset(bsys, covar)
+
+equity_delta = [0.0 for _ in bsys]
+neva.shock_and_solve(bsys, equity_delta, method='', solve_assets=False)
+```
+
 # Neva: Network Valuation in financial systems
 This package is an implementation of the Neva framework introduced in [1]. 
 Neva allows to perform the valuation of equities of banks that hold 
@@ -77,21 +93,6 @@ neva.shock_and_solve(bsys, equity_delta, 'exante_en_blackcox_gbm',
 # reading equities after one round and after all rounds   
 equity_direct = bsys.history[1]
 equity_final = bsys.history[-1]
-```
-
-## For AT's lattice model
-```python
-import neva
-
-# parsing data
-bsys, params = neva.parse_csv('data/balance_sheets.csv', 'data/exposures_table.csv', 'data/covar_list.csv')
-
-# Geometric Brownian Motion on external assets, with covariance matrix supplied.
-covar = {(b1, b2): params[b1]['covar'][b2] for b1 in params for b2 in params[b1]['covar']}
-bsys = neva.BankingSystemCorrelatedGBM.with_covar_asset(bsys, covar)
-
-equity_delta = [0.0 for _ in bsys]
-neva.shock_and_solve(bsys, equity_delta, method='', solve_assets=False)
 ```
 
 ## Compatibility
